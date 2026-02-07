@@ -1,10 +1,32 @@
 pipeline{
     agent any
 
+    environment {
+        IMAGE = "spring-api"
+        CONTAINER = "spring-api"
+    }
+
     stages{
-        stage('Test'){
+        stage('Build Jar'){
             steps{
-                echo 'Jenkins is running'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image'){
+            steps{
+                sh 'docker build -t $IMAGE .'
+            }
+        }
+
+
+        stage('Deploy'){
+            steps{
+                sh '''
+                    docker stop $CONTAINER || true
+                    docker rm $CONTAINER || true
+                    docker run -d -p 8081:8081 --name $CONTAINER $IMAGE
+                '''
             }
         }
     }
